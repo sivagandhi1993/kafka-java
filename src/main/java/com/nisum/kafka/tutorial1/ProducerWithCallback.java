@@ -7,12 +7,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 public class ProducerWithCallback {
 
     private static final String bootstarpServers = "127.0.0.1:9092";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
         Logger log = LoggerFactory.getLogger(ProducerWithCallback.class);
         //create producer properties
         Properties properties = new Properties();
@@ -23,7 +24,11 @@ public class ProducerWithCallback {
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
         //create producer record
         for(int i = 0 ; i <= 10 ; i++) {
-            ProducerRecord<String, String> record = new ProducerRecord<>("first_topic", "hello world " + i);
+            String topic = "third_topic";
+            String value = "hello world " + i;
+            String key = "id_" + i;
+            ProducerRecord<String, String> record = new ProducerRecord<>("third_topic", key, "hello world " + i);
+            log.info("Key: " + key);
             //send data
             producer.send(record, new Callback() {
                 @Override
@@ -40,7 +45,7 @@ public class ProducerWithCallback {
                         log.error("Error while producing: " + exception);
                     }
                 }
-            });
+            }).get();//block the .send() to make it synchronous  - don't use it in prod
         }
         //flush data
         producer.flush();
